@@ -1,28 +1,37 @@
 pipeline {
-    agent { label 'node-agent' }
-    
+    agent { label "dev agent"}
     stages{
-        stage('Code'){
+        stage("Code Cloned"){
             steps{
-                git url: 'https://github.com/LondheShubham153/node-todo-cicd.git', branch: 'master' 
+                git url: 'https://github.com/aviraln/node-todo-cicd.git', branch: 'master'
+                echo "code cloned"
             }
         }
-        stage('Build and Test'){
+        stage("Code Build"){
             steps{
-                sh 'docker build . -t trainwithshubham/node-todo-test:latest'
+                sh 'docker build . -t aviraln/node-todo_cicd:latest'
+                echo "code build"
             }
         }
-        stage('Push'){
+        stage("Docker Login and Push Image"){
             steps{
-                withCredentials([usernamePassword(credentialsId: 'dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
-        	     sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
-                 sh 'docker push trainwithshubham/node-todo-test:latest'
+                echo "login to docker hub and pushing image to it"
+                withCredentials([usernamePassword(credentialsId:'dockerHub', passwordVariable:'dockerHubPassword', usernameVariable:'dockerHubUser')]){
+                    sh "docker login -u ${env.dockerhubUser} -p ${env.dockerhubPassword}"
+                    sh 'docker push aviraln/node-todo_cicd:latest'
                 }
             }
         }
-        stage('Deploy'){
+        stage("Code Tested"){
             steps{
-                sh "docker-compose down && docker-compose up -d"
+                echo "code tested"
+            }
+        }
+        stage("Code Deployed"){
+            steps{
+                echo "code deploying started"
+                sh 'docker-compose up -d --no-deps --build web'
+                echo "code deployed"
             }
         }
     }
